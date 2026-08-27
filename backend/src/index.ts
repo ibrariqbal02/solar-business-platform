@@ -4,10 +4,13 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import connectDatabase from "./config/db";
+import { connectCloudinary } from "./config/cloudinary";
+import categoryRoutes from "./routes/category.routes";
 
 const app:Application = express();
 // middleware
-connectDatabase()
+connectDatabase();
+connectCloudinary();
 app.use(helmet());
 const PORT = process.env.PORT || 5000;
 app.use(
@@ -31,6 +34,8 @@ app.use(express.urlencoded({ extended: true }));
  
 
 // routes
+app.use("/api/categories", categoryRoutes);
+
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
     success: true,
