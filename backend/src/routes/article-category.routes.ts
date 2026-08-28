@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createArticleCategory,
   getArticleCategories,
@@ -7,29 +8,19 @@ import {
   updateArticleCategory,
   deleteArticleCategory,
   toggleArticleCategoryStatus,
-} from "../controllers/article-category.controller";
+} from "../controllers/article-category.controller.js";
 
 const router = Router();
 
-// POST   /api/article-categories              — create
-router.post("/", createArticleCategory);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",              getArticleCategories);
+router.get("/slug/:slug",    getArticleCategoryBySlug);
+router.get("/id/:id",        getArticleCategoryById);
 
-// GET    /api/article-categories              — list all (pagination, search, filter)
-router.get("/", getArticleCategories);
-
-// GET    /api/article-categories/slug/:slug   — get by slug (before /:id to avoid conflict)
-router.get("/slug/:slug", getArticleCategoryBySlug);
-
-// GET    /api/article-categories/id/:id       — get by ID
-router.get("/id/:id", getArticleCategoryById);
-
-// PUT    /api/article-categories/:id          — update
-router.put("/:id", updateArticleCategory);
-
-// DELETE /api/article-categories/:id          — soft delete
-router.delete("/:id", deleteArticleCategory);
-
-// PATCH  /api/article-categories/:id/status   — toggle active/inactive
-router.patch("/:id/status", toggleArticleCategoryStatus);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",           requireAuth, createArticleCategory);
+router.put(   "/:id",        requireAuth, updateArticleCategory);
+router.delete("/:id",        requireAuth, deleteArticleCategory);
+router.patch( "/:id/status", requireAuth, toggleArticleCategoryStatus);
 
 export default router;

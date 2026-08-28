@@ -1,5 +1,6 @@
 import { Router } from "express";
-import multerImage from "../config/multer";
+import multerImage from "../config/multer.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createService,
   getServices,
@@ -8,29 +9,19 @@ import {
   updateService,
   deleteService,
   toggleServiceStatus,
-} from "../controllers/service.controller";
+} from "../controllers/service.controller.js";
 
 const router = Router();
 
-// POST   /api/services                  — create (multipart/form-data, field: "image")
-router.post("/", multerImage.single("image"), createService);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",              getServices);
+router.get("/slug/:slug",    getServiceBySlug);
+router.get("/id/:id",        getServiceById);
 
-// GET    /api/services                  — list all (pagination, search, filter)
-router.get("/", getServices);
-
-// GET    /api/services/slug/:slug       — get by slug (before /:id to avoid conflict)
-router.get("/slug/:slug", getServiceBySlug);
-
-// GET    /api/services/id/:id           — get by ID
-router.get("/id/:id", getServiceById);
-
-// PUT    /api/services/:id              — update (multipart/form-data, field: "image")
-router.put("/:id", multerImage.single("image"), updateService);
-
-// DELETE /api/services/:id              — soft delete
-router.delete("/:id", deleteService);
-
-// PATCH  /api/services/:id/status       — toggle active/inactive
-router.patch("/:id/status", toggleServiceStatus);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",           requireAuth, multerImage.single("image"), createService);
+router.put(   "/:id",        requireAuth, multerImage.single("image"), updateService);
+router.delete("/:id",        requireAuth, deleteService);
+router.patch( "/:id/status", requireAuth, toggleServiceStatus);
 
 export default router;

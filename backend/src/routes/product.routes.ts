@@ -1,5 +1,6 @@
 import { Router } from "express";
-import multerImage from "../config/multer";
+import multerImage from "../config/multer.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createProduct,
   getAllProducts,
@@ -13,51 +14,24 @@ import {
   getRelatedProducts,
   trackProductView,
   restoreProduct,
-} from "../controllers/product.controller";
+} from "../controllers/product.controller.js";
 
 const router = Router();
 
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",                  getAllProducts);
+router.get("/slug/:slug",        getProductBySlug);
+router.get("/id/:id",            getProductById);
+router.get("/:id/related",       getRelatedProducts);
+router.post("/:id/enquiry",      submitProductEnquiry);
+router.post("/:id/view",         trackProductView);
 
-
-router.get("/", getAllProducts);
-
-
-router.post("/", multerImage.array("images", 10), createProduct);
-
-
-
-
-router.get("/slug/:slug", getProductBySlug);
-
-
-
-
-router.get("/id/:id", getProductById);
-
-
-router.put("/:id", multerImage.array("images", 10), updateProduct);
-
-
-router.delete("/:id", deleteProduct);
-
-
-
-
-router.patch("/:id/featured", toggleFeatured);
-
-
-router.patch("/:id/stock", updateStock);
-
-
-router.patch("/:id/restore", restoreProduct);
-
-
-router.post("/:id/enquiry", submitProductEnquiry);
-
-
-router.get("/:id/related", getRelatedProducts);
-
-
-router.post("/:id/view", trackProductView);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",               requireAuth, multerImage.array("images", 10), createProduct);
+router.put(   "/:id",            requireAuth, multerImage.array("images", 10), updateProduct);
+router.delete("/:id",            requireAuth, deleteProduct);
+router.patch( "/:id/featured",   requireAuth, toggleFeatured);
+router.patch( "/:id/stock",      requireAuth, updateStock);
+router.patch( "/:id/restore",    requireAuth, restoreProduct);
 
 export default router;

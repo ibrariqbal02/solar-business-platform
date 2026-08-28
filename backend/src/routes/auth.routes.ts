@@ -16,28 +16,28 @@ const router = Router();
 
 // ─── Rate limiters ────────────────────────────────────────────────────────────
 
-/** Strict limiter for login — 10 attempts per 15 minutes per IP */
+/** Strict limiter for login — 10 attempts per 15 min in production, relaxed in development */
 const loginLimiter = rateLimit({
   windowMs:        15 * 60 * 1000,
-  limit:           10,
+  limit:           process.env.NODE_ENV === "production" ? 10 : 50,
   standardHeaders: "draft-8",
   legacyHeaders:   false,
   message:         { success: false, message: "Too many login attempts. Please try again later." },
 });
 
-/** Moderate limiter for password reset requests — 5 per hour */
+/** Moderate limiter for password reset — 5 per hour in production, relaxed in development */
 const forgotPasswordLimiter = rateLimit({
   windowMs:        60 * 60 * 1000,
-  limit:           5,
+  limit:           process.env.NODE_ENV === "production" ? 5 : 20,
   standardHeaders: "draft-8",
   legacyHeaders:   false,
   message:         { success: false, message: "Too many reset requests. Please try again later." },
 });
 
-/** Registration limiter — 3 per hour per IP */
+/** Registration limiter — 3 per hour in production, relaxed in development */
 const registerLimiter = rateLimit({
   windowMs:        60 * 60 * 1000,
-  limit:           3,
+  limit:           process.env.NODE_ENV === "production" ? 3 : 20,
   standardHeaders: "draft-8",
   legacyHeaders:   false,
   message:         { success: false, message: "Too many registration attempts." },

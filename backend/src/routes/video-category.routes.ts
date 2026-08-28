@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createVideoCategory,
   getVideoCategories,
@@ -7,29 +8,19 @@ import {
   updateVideoCategory,
   deleteVideoCategory,
   toggleVideoCategoryStatus,
-} from "../controllers/video-category.controller";
+} from "../controllers/video-category.controller.js";
 
 const router = Router();
 
-// POST   /api/video-categories              — create
-router.post("/", createVideoCategory);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",              getVideoCategories);
+router.get("/slug/:slug",    getVideoCategoryBySlug);
+router.get("/id/:id",        getVideoCategoryById);
 
-// GET    /api/video-categories              — list all (pagination, search, filter)
-router.get("/", getVideoCategories);
-
-// GET    /api/video-categories/slug/:slug   — get by slug (before /:id to avoid conflict)
-router.get("/slug/:slug", getVideoCategoryBySlug);
-
-// GET    /api/video-categories/id/:id       — get by ID
-router.get("/id/:id", getVideoCategoryById);
-
-// PUT    /api/video-categories/:id          — update
-router.put("/:id", updateVideoCategory);
-
-// DELETE /api/video-categories/:id          — soft delete
-router.delete("/:id", deleteVideoCategory);
-
-// PATCH  /api/video-categories/:id/status   — toggle active/inactive
-router.patch("/:id/status", toggleVideoCategoryStatus);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",           requireAuth, createVideoCategory);
+router.put(   "/:id",        requireAuth, updateVideoCategory);
+router.delete("/:id",        requireAuth, deleteVideoCategory);
+router.patch( "/:id/status", requireAuth, toggleVideoCategoryStatus);
 
 export default router;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createVideo,
   getVideos,
@@ -8,32 +9,20 @@ import {
   deleteVideo,
   toggleVideoVisibility,
   toggleVideoFeatured,
-} from "../controllers/video.controller";
+} from "../controllers/video.controller.js";
 
 const router = Router();
 
-// POST   /api/videos                        — create
-router.post("/", createVideo);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",                      getVideos);
+router.get("/youtube/:youtubeId",    getVideoByYoutubeId);
+router.get("/id/:id",                getVideoById);
 
-// GET    /api/videos                        — list (search, filter, sort, paginate)
-router.get("/", getVideos);
-
-// GET    /api/videos/youtube/:youtubeId     — lookup by YouTube video ID (before /:id)
-router.get("/youtube/:youtubeId", getVideoByYoutubeId);
-
-// GET    /api/videos/id/:id                 — get by MongoDB ID
-router.get("/id/:id", getVideoById);
-
-// PUT    /api/videos/:id                    — update
-router.put("/:id", updateVideo);
-
-// DELETE /api/videos/:id                    — soft hide (isVisible = false)
-router.delete("/:id", deleteVideo);
-
-// PATCH  /api/videos/:id/visibility         — toggle show/hide
-router.patch("/:id/visibility", toggleVideoVisibility);
-
-// PATCH  /api/videos/:id/featured           — toggle featured
-router.patch("/:id/featured", toggleVideoFeatured);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",                   requireAuth, createVideo);
+router.put(   "/:id",                requireAuth, updateVideo);
+router.delete("/:id",                requireAuth, deleteVideo);
+router.patch( "/:id/visibility",     requireAuth, toggleVideoVisibility);
+router.patch( "/:id/featured",       requireAuth, toggleVideoFeatured);
 
 export default router;

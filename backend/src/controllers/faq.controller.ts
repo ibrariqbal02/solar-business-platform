@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import FAQ from "../models/faq.model";
+import FAQ from "../models/faq.model.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

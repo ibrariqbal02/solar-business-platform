@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import Article from "../models/article.model";
-import ArticleCategory from "../models/article-category.model";
-import Video from "../models/video.model";
-import Product from "../models/product.model";
-import uploadToCloudinary from "../utils/uploadToCloudinary";
-import deleteFromCloudinary from "../utils/deleteFromCloudinary";
+import Article from "../models/article.model.js";
+import ArticleCategory from "../models/article-category.model.js";
+import Video from "../models/video.model.js";
+import Product from "../models/product.model.js";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

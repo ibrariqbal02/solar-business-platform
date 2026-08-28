@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import VideoCategory from "../models/video-category.model";
+import VideoCategory from "../models/video-category.model.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

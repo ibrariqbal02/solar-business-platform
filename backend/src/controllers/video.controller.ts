@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import Video from "../models/video.model";
-import VideoCategory from "../models/video-category.model";
+import Video from "../models/video.model.js";
+import VideoCategory from "../models/video-category.model.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

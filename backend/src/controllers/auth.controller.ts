@@ -11,7 +11,6 @@ import {
 } from "../services/auth.service.js";
 import Admin from "../models/admin.model.js";
 
-// ─── Cookie config ────────────────────────────────────────────────────────────
 
 const REFRESH_COOKIE_NAME = "refreshToken";
 
@@ -30,7 +29,7 @@ const clearCookieOptions = () => ({
   path:     "/api/auth",
 });
 
-// ─── Input validators ─────────────────────────────────────────────────────────
+
 
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,15 +37,17 @@ const isValidEmail = (email: string) =>
 const isStrongPassword = (pw: string) =>
   pw.length >= 8;
 
-// ─── 1. Register admin ────────────────────────────────────────────────────────
 
-/**
- * POST /api/auth/register
- * Protected: requires ADMIN_REGISTRATION_KEY header to match env var.
- * This prevents arbitrary public users from creating admin accounts.
- */
 export const registerAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Guard: require a secret registration key so this endpoint is not publicly open
+    const providedKey = req.headers["x-registration-key"] as string | undefined;
+    const expectedKey = process.env.ADMIN_REGISTRATION_KEY;
+    if (!expectedKey || providedKey !== expectedKey) {
+      res.status(403).json({ success: false, message: "Forbidden" });
+      return;
+    }
+
     const { name, email, password } = req.body;
 
     if (!name?.trim()) {

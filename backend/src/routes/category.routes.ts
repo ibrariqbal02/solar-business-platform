@@ -1,5 +1,6 @@
 import { Router } from "express";
-import multerImage from "../config/multer";
+import multerImage from "../config/multer.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createCategory,
   getAllCategories,
@@ -7,26 +8,18 @@ import {
   updateCategory,
   deleteCategory,
   restoreCategory,
-} from "../controllers/category.controller";
+} from "../controllers/category.controller.js";
 
 const router = Router();
 
-// POST   /api/categories              — create (multipart/form-data, field: "image")
-router.post("/", multerImage.single("image"), createCategory);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",             getAllCategories);
+router.get("/:identifier",  getCategoryById);
 
-// GET    /api/categories              — list all (pagination, search, filter)
-router.get("/", getAllCategories);
-
-// GET    /api/categories/:identifier  — get one by ObjectId or slug
-router.get("/:identifier", getCategoryById);
-
-// PUT    /api/categories/:id          — update (multipart/form-data, field: "image")
-router.put("/:id", multerImage.single("image"), updateCategory);
-
-// DELETE /api/categories/:id          — soft delete (deactivate)
-router.delete("/:id", deleteCategory);
-
-// PATCH  /api/categories/:id/restore  — restore deactivated category
-router.patch("/:id/restore", restoreCategory);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",                  requireAuth, multerImage.single("image"), createCategory);
+router.put(   "/:id",               requireAuth, multerImage.single("image"), updateCategory);
+router.delete("/:id",               requireAuth, deleteCategory);
+router.patch( "/:id/restore",       requireAuth, restoreCategory);
 
 export default router;

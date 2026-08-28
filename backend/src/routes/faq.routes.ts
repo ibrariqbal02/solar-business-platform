@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createFAQ,
   getFAQs,
@@ -8,32 +9,20 @@ import {
   deleteFAQ,
   toggleFAQStatus,
   reorderFAQs,
-} from "../controllers/faq.controller";
+} from "../controllers/faq.controller.js";
 
 const router = Router();
 
-// POST   /api/faqs                — create
-router.post("/", createFAQ);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",        getFAQs);
+router.get("/active",  getActiveFAQs);
+router.get("/:id",     getFAQById);
 
-// GET    /api/faqs                — list all (search, filter, paginate)
-router.get("/", getFAQs);
-
-// GET    /api/faqs/active         — public: active FAQs only (before /:id)
-router.get("/active", getActiveFAQs);
-
-// PATCH  /api/faqs/reorder        — bulk reorder (before /:id)
-router.patch("/reorder", reorderFAQs);
-
-// GET    /api/faqs/:id            — get by ID
-router.get("/:id", getFAQById);
-
-// PUT    /api/faqs/:id            — update
-router.put("/:id", updateFAQ);
-
-// DELETE /api/faqs/:id            — soft delete
-router.delete("/:id", deleteFAQ);
-
-// PATCH  /api/faqs/:id/status     — toggle active/inactive
-router.patch("/:id/status", toggleFAQStatus);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",            requireAuth, createFAQ);
+router.patch( "/reorder",     requireAuth, reorderFAQs);
+router.put(   "/:id",         requireAuth, updateFAQ);
+router.delete("/:id",         requireAuth, deleteFAQ);
+router.patch( "/:id/status",  requireAuth, toggleFAQStatus);
 
 export default router;
