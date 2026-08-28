@@ -10,6 +10,7 @@ import productRoutes from "./routes/product.routes";
 import serviceRoutes from "./routes/service.routes";
 import videoCategoryRoutes from "./routes/video-category.routes";
 import videoRoutes from "./routes/video.routes";
+import articleCategoryRoutes from "./routes/article-category.routes";
 
 const app:Application = express();
 // middleware
@@ -43,6 +44,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/video-categories", videoCategoryRoutes);
 app.use("/api/videos", videoRoutes);
+app.use("/api/article-categories", articleCategoryRoutes);
 
 
 app.listen(PORT, () => {
