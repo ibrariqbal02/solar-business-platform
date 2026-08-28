@@ -7,6 +7,7 @@ import connectDatabase from "./config/db";
 import { connectCloudinary } from "./config/cloudinary";
 import categoryRoutes from "./routes/category.routes";
 import productRoutes from "./routes/product.routes";
+import serviceRoutes from "./routes/service.routes";
 
 const app:Application = express();
 // middleware
@@ -37,6 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 // routes
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/services", serviceRoutes);
 
 
 app.listen(PORT, () => {
