@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import connectDatabase from "./config/db";
 import { connectCloudinary } from "./config/cloudinary";
 import categoryRoutes from "./routes/category.routes";
+import productRoutes from "./routes/product.routes";
 
 const app:Application = express();
 // middleware
@@ -35,13 +36,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // routes
 app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
 
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Solar Business Platform API is running",
-  });
-});
+
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
 });
