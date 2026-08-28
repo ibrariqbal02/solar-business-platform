@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import Category from "../models/category.model";
-import uploadToCloudinary from "../utils/uploadToCloudinary";
-import deleteFromCloudinary from "../utils/deleteFromCloudinary";
+import Category from "../models/category.model.js";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import ArticleCategory from "../models/article-category.model";
+import ArticleCategory from "../models/article-category.model.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

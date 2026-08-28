@@ -1,5 +1,6 @@
 import { Router } from "express";
-import multerImage from "../config/multer";
+import multerImage from "../config/multer.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createArticle,
   getArticles,
@@ -9,32 +10,20 @@ import {
   deleteArticle,
   publishArticle,
   unpublishArticle,
-} from "../controllers/article.controller";
+} from "../controllers/article.controller.js";
 
 const router = Router();
 
-// POST   /api/articles                   — create (multipart/form-data, field: "featuredImage")
-router.post("/", multerImage.single("featuredImage"), createArticle);
+// ─── Public ───────────────────────────────────────────────────────────────────
+router.get("/",              getArticles);
+router.get("/slug/:slug",    getArticleBySlug);
+router.get("/id/:id",        getArticleById);
 
-// GET    /api/articles                   — list (search, filter, sort, paginate)
-router.get("/", getArticles);
-
-// GET    /api/articles/slug/:slug        — get by slug (before /:id to avoid conflict)
-router.get("/slug/:slug", getArticleBySlug);
-
-// GET    /api/articles/id/:id            — get full article by MongoDB ID
-router.get("/id/:id", getArticleById);
-
-// PUT    /api/articles/:id               — update (multipart/form-data, field: "featuredImage")
-router.put("/:id", multerImage.single("featuredImage"), updateArticle);
-
-// DELETE /api/articles/:id               — soft removal (status = "unpublished")
-router.delete("/:id", deleteArticle);
-
-// PATCH  /api/articles/:id/publish       — publish
-router.patch("/:id/publish", publishArticle);
-
-// PATCH  /api/articles/:id/unpublish     — unpublish
-router.patch("/:id/unpublish", unpublishArticle);
+// ─── Protected (admin) ────────────────────────────────────────────────────────
+router.post(  "/",               requireAuth, multerImage.single("featuredImage"), createArticle);
+router.put(   "/:id",            requireAuth, multerImage.single("featuredImage"), updateArticle);
+router.delete("/:id",            requireAuth, deleteArticle);
+router.patch( "/:id/publish",    requireAuth, publishArticle);
+router.patch( "/:id/unpublish",  requireAuth, unpublishArticle);
 
 export default router;
