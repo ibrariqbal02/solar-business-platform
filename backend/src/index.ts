@@ -8,6 +8,8 @@ import { connectCloudinary } from "./config/cloudinary";
 import categoryRoutes from "./routes/category.routes";
 import productRoutes from "./routes/product.routes";
 import serviceRoutes from "./routes/service.routes";
+import videoCategoryRoutes from "./routes/video-category.routes";
+import videoRoutes from "./routes/video.routes";
 
 const app:Application = express();
 // middleware
@@ -39,6 +41,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/video-categories", videoCategoryRoutes);
+app.use("/api/videos", videoRoutes);
 
 
 app.listen(PORT, () => {
