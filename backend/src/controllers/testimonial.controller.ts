@@ -156,7 +156,7 @@ export const approveTestimonial = async (req: Request, res: Response): Promise<v
   try {
     const id = req.params.id as string;
     if (!isValidId(id)) { res.status(400).json({ success: false, message: "Invalid ID" }); return; }
-    const t = await Testimonial.findByIdAndUpdate(id, { status: "approved", isVisible: true }, { new: true });
+    const t = await Testimonial.findByIdAndUpdate(id, { status: "approved", isVisible: true }, { returnDocument: "after" });
     if (!t) { res.status(404).json({ success: false, message: "Testimonial not found" }); return; }
     res.status(200).json({ success: true, message: "Testimonial approved", data: t });
   } catch (error: any) {
@@ -171,7 +171,7 @@ export const toggleTestimonialVisibility = async (req: Request, res: Response): 
     if (!isValidId(id)) { res.status(400).json({ success: false, message: "Invalid ID" }); return; }
     const { isVisible } = req.body;
     if (isVisible === undefined) { res.status(400).json({ success: false, message: "isVisible is required" }); return; }
-    const t = await Testimonial.findByIdAndUpdate(id, { isVisible: isVisible === true || isVisible === "true" }, { new: true, select: "_id customerName isVisible status" });
+    const t = await Testimonial.findByIdAndUpdate(id, { isVisible: isVisible === true || isVisible === "true" }, { returnDocument: "after", select: "_id customerName isVisible status" });
     if (!t) { res.status(404).json({ success: false, message: "Testimonial not found" }); return; }
     res.status(200).json({ success: true, message: `Testimonial ${t.isVisible ? "shown" : "hidden"}`, data: t });
   } catch (error: any) {

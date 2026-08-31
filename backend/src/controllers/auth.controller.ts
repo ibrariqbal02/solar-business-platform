@@ -246,12 +246,12 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     const result = await forgotPasswordService(email);
 
     // ── Development: expose token for testing ─────────────────────────────────
-    // !! Remove or gate this behind NODE_ENV=development before going to production !!
+    // !! NEVER expose this in production or test environments !!
     if (process.env.NODE_ENV === "development" && result) {
       res.status(200).json({
         success: true,
         message: "If that email exists, a reset link has been sent.",
-        _dev_resetToken: result.rawToken,   // DEVELOPMENT ONLY
+        _dev_resetToken: result.rawToken,   // DEVELOPMENT ONLY — remove before production
       });
       return;
     }

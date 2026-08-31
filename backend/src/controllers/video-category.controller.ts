@@ -263,7 +263,7 @@ export const toggleVideoCategoryStatus = async (req: Request, res: Response): Pr
     const category = await VideoCategory.findByIdAndUpdate(
       id,
       { isActive: isActive === true || isActive === "true" },
-      { new: true, select: "_id name slug isActive" }
+      { returnDocument: "after", select: "_id name slug isActive" }
     );
 
     if (!category) {

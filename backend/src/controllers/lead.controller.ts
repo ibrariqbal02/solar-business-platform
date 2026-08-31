@@ -7,7 +7,7 @@ import Notification from "../models/notification.model.js";
 const isValidId = (id: string) => mongoose.Types.ObjectId.isValid(id);
 
 const LEAD_TYPES = ["product_enquiry", "technical_support", "video_call", "site_visit", "installation", "contact"] as const;
-const LEAD_STATUSES = ["new", "contacted", "in_progress", "scheduled", "completed", "cancelled"] as const;
+const LEAD_STATUSES = ["new", "contacted", "in_progress", "scheduled", "completed", "resolved", "cancelled"] as const;
 
 // Notification titles per lead type
 const notificationTitles: Record<string, string> = {

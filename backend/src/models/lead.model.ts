@@ -19,6 +19,7 @@ export type LeadStatus =
   | "in_progress"
   | "scheduled"
   | "completed"
+  | "resolved"
   | "cancelled";
 
 export interface ILead extends Document {
@@ -47,7 +48,7 @@ const leadSchema = new Schema<ILead>(
     },
     status: {
       type: String,
-      enum: ["new", "contacted", "in_progress", "scheduled", "completed", "cancelled"],
+      enum: ["new", "contacted", "in_progress", "scheduled", "completed", "resolved", "cancelled"],
       default: "new",
       index: true,
     },

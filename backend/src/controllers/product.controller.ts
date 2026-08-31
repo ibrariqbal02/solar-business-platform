@@ -497,7 +497,7 @@ export const toggleFeatured = async (req: Request, res: Response): Promise<void>
     const product = await Product.findByIdAndUpdate(
       id,
       { isFeatured: isFeatured === true || isFeatured === "true" },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!product) {
@@ -690,7 +690,7 @@ export const trackProductView = async (req: Request, res: Response): Promise<voi
     const product = await Product.findOneAndUpdate(
       { _id: id, isActive: true },
       { $inc: { viewCount: 1 } },
-      { new: true, select: "_id viewCount" }
+      { returnDocument: "after", select: "_id viewCount" }
     );
 
     if (!product) {

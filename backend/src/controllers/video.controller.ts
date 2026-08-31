@@ -407,7 +407,7 @@ export const toggleVideoVisibility = async (req: Request, res: Response): Promis
     const video = await Video.findByIdAndUpdate(
       id,
       { isVisible: isVisible === true || isVisible === "true" },
-      { new: true, select: "_id title isVisible" }
+      { returnDocument: "after", select: "_id title isVisible" }
     );
     if (!video) {
       res.status(404).json({ success: false, message: "Video not found" });
@@ -448,7 +448,7 @@ export const toggleVideoFeatured = async (req: Request, res: Response): Promise<
     const video = await Video.findByIdAndUpdate(
       id,
       { isFeatured: isFeatured === true || isFeatured === "true" },
-      { new: true, select: "_id title isFeatured" }
+      { returnDocument: "after", select: "_id title isFeatured" }
     );
     if (!video) {
       res.status(404).json({ success: false, message: "Video not found" });

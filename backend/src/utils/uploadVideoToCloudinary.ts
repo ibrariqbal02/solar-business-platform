@@ -1,5 +1,5 @@
 import { Readable } from "stream";
-import { cloudinary } from "../config/cloudinary";
+import { cloudinary } from "../config/cloudinary.js";
 
 export interface CloudinaryVideoResult {
   secure_url: string;

@@ -20,6 +20,8 @@ export interface IBusinessHours {
 }
 
 export interface IWebsiteSettings extends Document {
+  /** Internal singleton lock — never exposed via API */
+  _singleton?: string;
   // Business identity
   businessName: string;
   tagline?: string;
@@ -55,6 +57,8 @@ export interface IWebsiteSettings extends Document {
 
 const websiteSettingsSchema = new Schema<IWebsiteSettings>(
   {
+    // Singleton lock — ensures only one document can ever exist
+    _singleton: { type: String, default: "global", unique: true, select: false },
     businessName: { type: String, required: true, trim: true, default: "Solar Business" },
     tagline:      { type: String, trim: true },
     logo:         { type: String, trim: true },

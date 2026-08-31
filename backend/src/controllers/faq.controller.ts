@@ -276,7 +276,7 @@ export const toggleFAQStatus = async (req: Request, res: Response): Promise<void
     const faq = await FAQ.findByIdAndUpdate(
       id,
       { isActive: isActive === true || isActive === "true" },
-      { new: true, select: "_id question isActive" }
+      { returnDocument: "after", select: "_id question isActive" }
     );
     if (!faq) {
       res.status(404).json({ success: false, message: "FAQ not found" });

@@ -1,0 +1,1533 @@
+{
+  "info": {
+    "name": "Solar Business Platform API",
+    "description": "Complete API collection for the Solar Inverter Business Platform backend. All admin endpoints require a Bearer access token in the Authorization header. The refresh token is stored in an HttpOnly cookie automatically by the browser/Postman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "solar-business-platform-v1"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Paste access token from login response here. Never store secrets in the collection."
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01 Authentication",
+      "item": [
+        {
+          "name": "Register Admin",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Registration-Key", "value": "replace_with_strong_random_key", "description": "Must match ADMIN_REGISTRATION_KEY env var" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@solar.com\",\n  \"password\": \"StrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates an admin account. Requires X-Registration-Key header matching server env var. Role is always 'admin' regardless of body."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@solar.com\",\n  \"password\": \"StrongPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Returns accessToken in JSON body. Sets HttpOnly refreshToken cookie. The test script auto-saves the accessToken to the collection variable."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","auth","refresh"] },
+            "description": "Reads refreshToken from HttpOnly cookie. Returns new accessToken. Rotates refresh token (old one is revoked)."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","auth","logout"] },
+            "description": "Revokes refresh token from DB. Clears HttpOnly cookie. Always returns 200."
+          }
+        },
+        {
+          "name": "Get Current Admin (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] },
+            "description": "Returns the authenticated admin profile. Requires Bearer token."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api","auth","change-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPass123!\",\n  \"newPassword\": \"NewPass456!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Changes password. Revokes all refresh sessions on success."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api","auth","forgot-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@solar.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Always returns 200 to prevent email enumeration. In development mode, _dev_resetToken is returned for testing."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api","auth","reset-password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"paste_reset_token_here\",\n  \"newPassword\": \"NewPass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Resets password using single-use token from forgot-password. Revokes all refresh sessions."
+          }
+        },
+        {
+          "name": "LOGIN — Wrong Password (expect 401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@solar.com\",\n  \"password\": \"WrongPassword!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "GET /me — No Token (expect 401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Products",
+      "item": [
+        {
+          "name": "Get All Products (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&limit=12&sort=newest",
+              "host": ["{{baseUrl}}"], "path": ["api","products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "12" },
+                { "key": "sort", "value": "newest", "description": "newest|oldest|price_asc|price_desc|featured|views" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true, "description": "ObjectId" },
+                { "key": "isAvailable", "value": "true", "disabled": true },
+                { "key": "stockStatus", "value": "in_stock", "disabled": true, "description": "in_stock|low_stock|out_of_stock" },
+                { "key": "isFeatured", "value": "true", "disabled": true },
+                { "key": "minPrice", "value": "1000", "disabled": true },
+                { "key": "maxPrice", "value": "100000", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/slug/5kw-solar-inverter", "host": ["{{baseUrl}}"], "path": ["api","products","slug","5kw-solar-inverter"] }
+          }
+        },
+        {
+          "name": "Get Product by ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/id/PRODUCT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","products","id","PRODUCT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get Related Products (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/related", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","related"] }
+          }
+        },
+        {
+          "name": "Submit Product Enquiry (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/enquiry", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","enquiry"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Ahmed Khan\",\n  \"customerPhone\": \"03001234567\",\n  \"customerEmail\": \"ahmed@example.com\",\n  \"message\": \"I need 3 units for my farm\",\n  \"quantity\": 3,\n  \"channel\": \"whatsapp\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Track Product View (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/view", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","view"] }
+          }
+        },
+        {
+          "name": "Create Product (admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api","products"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "5kW Solar Inverter", "type": "text" },
+                { "key": "shortDescription", "value": "High-efficiency hybrid solar inverter", "type": "text" },
+                { "key": "category", "value": "CATEGORY_ID_HERE", "type": "text" },
+                { "key": "price", "value": "45000", "type": "text" },
+                { "key": "discountedPrice", "value": "42000", "type": "text" },
+                { "key": "unit", "value": "piece", "type": "text" },
+                { "key": "stock", "value": "10", "type": "text" },
+                { "key": "isAvailable", "value": "true", "type": "text" },
+                { "key": "isFeatured", "value": "false", "type": "text" },
+                { "key": "features", "value": "[\"Hybrid inverter\",\"MPPT charge controller\"]", "type": "text" },
+                { "key": "applications", "value": "[\"residential\",\"commercial\"]", "type": "text" },
+                { "key": "specifications", "value": "[{\"label\":\"Power Output\",\"value\":\"5kW\"},{\"label\":\"Efficiency\",\"value\":\"98%\"}]", "type": "text" },
+                { "key": "tags", "value": "[\"inverter\",\"solar\",\"hybrid\"]", "type": "text" },
+                { "key": "images", "src": [], "type": "file", "description": "Up to 10 image files" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Product (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "price", "value": "47000", "type": "text" },
+                { "key": "stock", "value": "15", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Stock (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/stock", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","stock"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"stock\": 25 }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle Featured (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/featured", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","featured"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isFeatured\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Deactivate Product (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Restore Product (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/PRODUCT_ID_HERE/restore", "host": ["{{baseUrl}}"], "path": ["api","products","PRODUCT_ID_HERE","restore"] }
+          }
+        },
+        {
+          "name": "Create Product — Missing Price (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api","products"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Incomplete Product", "type": "text" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Categories",
+      "item": [
+        {
+          "name": "Get All Categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories?active=true&page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["api","categories"],
+              "query": [
+                { "key": "active", "value": "true" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort", "value": "createdAt", "disabled": true },
+                { "key": "order", "value": "desc", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID or Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/inverters", "host": ["{{baseUrl}}"], "path": ["api","categories","inverters"], "description": "Pass ObjectId or slug as :identifier" }
+          }
+        },
+        {
+          "name": "Create Category (admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api","categories"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Solar Inverters", "type": "text" },
+                { "key": "description", "value": "All types of solar inverters", "type": "text" },
+                { "key": "image", "src": [], "type": "file" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Category (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/CATEGORY_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","categories","CATEGORY_ID_HERE"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Updated Category Name", "type": "text" },
+                { "key": "isActive", "value": "true", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Category (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/CATEGORY_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","categories","CATEGORY_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Restore Category (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/CATEGORY_ID_HERE/restore", "host": ["{{baseUrl}}"], "path": ["api","categories","CATEGORY_ID_HERE","restore"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Services",
+      "item": [
+        {
+          "name": "Get All Services (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/services?active=true&sort=order",
+              "host": ["{{baseUrl}}"], "path": ["api","services"],
+              "query": [
+                { "key": "active", "value": "true" },
+                { "key": "sort", "value": "order", "description": "order|newest|oldest" },
+                { "key": "area", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Service by Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/services/slug/solar-installation", "host": ["{{baseUrl}}"], "path": ["api","services","slug","solar-installation"] }
+          }
+        },
+        {
+          "name": "Get Service by ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/services/id/SERVICE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","services","id","SERVICE_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Create Service (admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/services", "host": ["{{baseUrl}}"], "path": ["api","services"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Solar Installation", "type": "text" },
+                { "key": "shortDescription", "value": "Complete solar system installation", "type": "text" },
+                { "key": "description", "value": "We provide end-to-end solar installation services...", "type": "text" },
+                { "key": "areas", "value": "[\"Lahore\",\"Karachi\",\"Islamabad\"]", "type": "text" },
+                { "key": "features", "value": "[\"Free site survey\",\"1-year warranty\"]", "type": "text" },
+                { "key": "cta", "value": "{\"label\":\"Get a Free Quote\",\"type\":\"whatsapp\"}", "type": "text" },
+                { "key": "order", "value": "1", "type": "text" },
+                { "key": "image", "src": [], "type": "file" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Service (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/services/SERVICE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","services","SERVICE_ID_HERE"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "order", "value": "2", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle Service Status (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/services/SERVICE_ID_HERE/status", "host": ["{{baseUrl}}"], "path": ["api","services","SERVICE_ID_HERE","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": false }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Deactivate Service (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/services/SERVICE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","services","SERVICE_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Videos",
+      "item": [
+        {
+          "name": "Get All Videos (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/videos?isVisible=true&page=1&limit=12",
+              "host": ["{{baseUrl}}"], "path": ["api","videos"],
+              "query": [
+                { "key": "isVisible", "value": "true" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "isFeatured", "value": "true", "disabled": true },
+                { "key": "sort", "value": "newest", "disabled": true, "description": "newest|oldest|featured|views" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "12" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Video by ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/videos/id/VIDEO_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","videos","id","VIDEO_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get Video by YouTube ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/videos/youtube/dQw4w9WgXcQ", "host": ["{{baseUrl}}"], "path": ["api","videos","youtube","dQw4w9WgXcQ"] }
+          }
+        },
+        {
+          "name": "Create Video (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/videos", "host": ["{{baseUrl}}"], "path": ["api","videos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How to Install a 5kW Solar System\",\n  \"youtubeVideoId\": \"dQw4w9WgXcQ\",\n  \"category\": \"VIDEO_CATEGORY_ID_HERE\",\n  \"description\": \"Complete installation guide for 5kW solar systems\",\n  \"publishedAt\": \"2024-01-15T00:00:00.000Z\",\n  \"duration\": \"15:42\",\n  \"tags\": [\"installation\",\"tutorial\",\"solar\"],\n  \"isVisible\": true,\n  \"isFeatured\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Video (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/videos/VIDEO_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","videos","VIDEO_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Video Title\",\n  \"isFeatured\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle Visibility (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/videos/VIDEO_ID_HERE/visibility", "host": ["{{baseUrl}}"], "path": ["api","videos","VIDEO_ID_HERE","visibility"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isVisible\": false }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle Featured (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/videos/VIDEO_ID_HERE/featured", "host": ["{{baseUrl}}"], "path": ["api","videos","VIDEO_ID_HERE","featured"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isFeatured\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete (Hide) Video (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/videos/VIDEO_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","videos","VIDEO_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Duplicate YouTube ID (expect 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/videos", "host": ["{{baseUrl}}"], "path": ["api","videos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Duplicate\",\n  \"youtubeVideoId\": \"dQw4w9WgXcQ\",\n  \"category\": \"VIDEO_CATEGORY_ID_HERE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Video Categories",
+      "item": [
+        {
+          "name": "Get All Video Categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/video-categories?active=true", "host": ["{{baseUrl}}"], "path": ["api","video-categories"], "query": [{ "key": "active", "value": "true" }] }
+          }
+        },
+        {
+          "name": "Get Video Category by Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/video-categories/slug/tutorials", "host": ["{{baseUrl}}"], "path": ["api","video-categories","slug","tutorials"] }
+          }
+        },
+        {
+          "name": "Get Video Category by ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/video-categories/id/VIDEO_CAT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","video-categories","id","VIDEO_CAT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Create Video Category (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/video-categories", "host": ["{{baseUrl}}"], "path": ["api","video-categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Installation Tutorials\",\n  \"description\": \"Step-by-step installation guides\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Video Category (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/video-categories/VIDEO_CAT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","video-categories","VIDEO_CAT_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle Video Category Status (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/video-categories/VIDEO_CAT_ID_HERE/status", "host": ["{{baseUrl}}"], "path": ["api","video-categories","VIDEO_CAT_ID_HERE","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": false }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Deactivate Video Category (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/video-categories/VIDEO_CAT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","video-categories","VIDEO_CAT_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Articles",
+      "item": [
+        {
+          "name": "Get All Articles (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/articles?status=published&page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["api","articles"],
+              "query": [
+                { "key": "status", "value": "published", "description": "draft|published|unpublished" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "sort", "value": "newest", "disabled": true, "description": "newest|oldest|published" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Article by Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles/slug/how-to-fix-inverter-error-e04", "host": ["{{baseUrl}}"], "path": ["api","articles","slug","how-to-fix-inverter-error-e04"] }
+          }
+        },
+        {
+          "name": "Get Article by ID (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles/id/ARTICLE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","articles","id","ARTICLE_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Create Article (admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles", "host": ["{{baseUrl}}"], "path": ["api","articles"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "How to Fix Inverter Error E04", "type": "text" },
+                { "key": "category", "value": "ARTICLE_CAT_ID_HERE", "type": "text" },
+                { "key": "excerpt", "value": "Complete troubleshooting guide for E04 error code", "type": "text" },
+                { "key": "description", "value": "The E04 error usually indicates...", "type": "text" },
+                { "key": "technicalExplanation", "value": "E04 is triggered when...", "type": "text" },
+                { "key": "troubleshootingSteps", "value": "[\"Check input voltage\",\"Verify battery connections\"]", "type": "text" },
+                { "key": "safetyInformation", "value": "Always disconnect AC power before...", "type": "text" },
+                { "key": "relatedVideos", "value": "[\"VIDEO_ID_1\"]", "type": "text" },
+                { "key": "relatedProducts", "value": "[\"PRODUCT_ID_1\"]", "type": "text" },
+                { "key": "tags", "value": "[\"error-code\",\"troubleshooting\",\"E04\"]", "type": "text" },
+                { "key": "status", "value": "draft", "type": "text" },
+                { "key": "featuredImage", "src": [], "type": "file" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish Article (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/articles/ARTICLE_ID_HERE/publish", "host": ["{{baseUrl}}"], "path": ["api","articles","ARTICLE_ID_HERE","publish"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Unpublish Article (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles/ARTICLE_ID_HERE/unpublish", "host": ["{{baseUrl}}"], "path": ["api","articles","ARTICLE_ID_HERE","unpublish"] }
+          }
+        },
+        {
+          "name": "Update Article (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles/ARTICLE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","articles","ARTICLE_ID_HERE"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "excerpt", "value": "Updated excerpt text", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unpublish (Delete) Article (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/articles/ARTICLE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","articles","ARTICLE_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Article Categories",
+      "item": [
+        {
+          "name": "Get All Article Categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/article-categories?active=true", "host": ["{{baseUrl}}"], "path": ["api","article-categories"], "query": [{ "key": "active", "value": "true" }] }
+          }
+        },
+        {
+          "name": "Get Article Category by Slug (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/article-categories/slug/troubleshooting", "host": ["{{baseUrl}}"], "path": ["api","article-categories","slug","troubleshooting"] }
+          }
+        },
+        {
+          "name": "Create Article Category (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/article-categories", "host": ["{{baseUrl}}"], "path": ["api","article-categories"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Troubleshooting\",\n  \"description\": \"Error codes and fixes\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update Article Category (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/article-categories/ARTICLE_CAT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","article-categories","ARTICLE_CAT_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle Article Category Status (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/article-categories/ARTICLE_CAT_ID_HERE/status", "host": ["{{baseUrl}}"], "path": ["api","article-categories","ARTICLE_CAT_ID_HERE","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Deactivate Article Category (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/article-categories/ARTICLE_CAT_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","article-categories","ARTICLE_CAT_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 FAQs",
+      "item": [
+        {
+          "name": "Get FAQs — paginated (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/faqs?active=true&page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["api","faqs"],
+              "query": [
+                { "key": "active", "value": "true" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true, "description": "general|products|installation|delivery|technical_support|pricing|warranty|other" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active FAQs — all (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/faqs/active?category=products", "host": ["{{baseUrl}}"], "path": ["api","faqs","active"], "query": [{ "key": "category", "value": "products", "disabled": true }] }
+          }
+        },
+        {
+          "name": "Get FAQ by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/faqs/FAQ_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","faqs","FAQ_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Create FAQ (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/faqs", "host": ["{{baseUrl}}"], "path": ["api","faqs"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Do you provide warranty on inverters?\",\n  \"answer\": \"Yes, all inverters come with a 1-year warranty.\",\n  \"category\": \"warranty\",\n  \"order\": 1,\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Update FAQ (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/faqs/FAQ_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","faqs","FAQ_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"order\": 2, \"isActive\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Reorder FAQs (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/faqs/reorder", "host": ["{{baseUrl}}"], "path": ["api","faqs","reorder"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"id\": \"FAQ_ID_1\", \"order\": 0 },\n    { \"id\": \"FAQ_ID_2\", \"order\": 1 },\n    { \"id\": \"FAQ_ID_3\", \"order\": 2 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Toggle FAQ Status (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/faqs/FAQ_ID_HERE/status", "host": ["{{baseUrl}}"], "path": ["api","faqs","FAQ_ID_HERE","status"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isActive\": false }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Deactivate FAQ (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/faqs/FAQ_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","faqs","FAQ_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Testimonials",
+      "item": [
+        {
+          "name": "Submit Testimonial (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/testimonials", "host": ["{{baseUrl}}"], "path": ["api","testimonials"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "customerName", "value": "Muhammad Ali", "type": "text" },
+                { "key": "customerLocation", "value": "Lahore, Pakistan", "type": "text" },
+                { "key": "review", "value": "Excellent service! The installation was done professionally.", "type": "text" },
+                { "key": "rating", "value": "5", "type": "text" },
+                { "key": "relatedService", "value": "Solar Installation", "type": "text" },
+                { "key": "customerImage", "src": [], "type": "file" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Testimonials (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/testimonials?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["api","testimonials"] }
+          }
+        },
+        {
+          "name": "Get All Testimonials (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/testimonials/admin?status=pending",
+              "host": ["{{baseUrl}}"], "path": ["api","testimonials","admin"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "pending|approved|rejected" },
+                { "key": "isVisible", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Testimonial by ID (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/testimonials/TESTIMONIAL_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","testimonials","TESTIMONIAL_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Approve Testimonial (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/testimonials/TESTIMONIAL_ID_HERE/approve", "host": ["{{baseUrl}}"], "path": ["api","testimonials","TESTIMONIAL_ID_HERE","approve"] }
+          }
+        },
+        {
+          "name": "Toggle Visibility (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/testimonials/TESTIMONIAL_ID_HERE/visibility", "host": ["{{baseUrl}}"], "path": ["api","testimonials","TESTIMONIAL_ID_HERE","visibility"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"isVisible\": true }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Testimonial (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/testimonials/TESTIMONIAL_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","testimonials","TESTIMONIAL_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Leads",
+      "item": [
+        {
+          "name": "Submit Contact Enquiry (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"contact\",\n  \"customerName\": \"Ahmed Khan\",\n  \"customerPhone\": \"03001234567\",\n  \"customerWhatsApp\": \"03001234567\",\n  \"customerEmail\": \"ahmed@example.com\",\n  \"data\": {\n    \"subject\": \"Product inquiry\",\n    \"message\": \"I need information about your 5kW inverters\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Submit Product Enquiry (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"product_enquiry\",\n  \"customerName\": \"Bilal Ahmed\",\n  \"customerPhone\": \"03009876543\",\n  \"data\": {\n    \"productId\": \"PRODUCT_ID_HERE\",\n    \"productName\": \"5kW Solar Inverter\",\n    \"quantity\": 2,\n    \"message\": \"Need bulk pricing\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Submit Technical Support (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"technical_support\",\n  \"customerName\": \"Sara Khan\",\n  \"customerPhone\": \"03001111111\",\n  \"data\": {\n    \"inverterBrand\": \"Growatt\",\n    \"inverterModel\": \"SPF 5000ES\",\n    \"problem\": \"Getting E04 error code\",\n    \"errorCode\": \"E04\",\n    \"issueType\": \"error_code\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Submit Video Call Request (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"video_call\",\n  \"customerName\": \"Umar Farooq\",\n  \"customerPhone\": \"03002222222\",\n  \"data\": {\n    \"inverterBrand\": \"Huawei\",\n    \"inverterModel\": \"SUN2000\",\n    \"problem\": \"Low battery charging\",\n    \"preferredDate\": \"2024-02-15\",\n    \"preferredTime\": \"10:00 AM\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Submit Site Visit Request (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"site_visit\",\n  \"customerName\": \"Fatima Malik\",\n  \"customerPhone\": \"03003333333\",\n  \"data\": {\n    \"city\": \"Lahore\",\n    \"area\": \"DHA Phase 5\",\n    \"address\": \"House 123, Street 4\",\n    \"serviceRequired\": \"System assessment\",\n    \"systemSize\": \"10kW\",\n    \"preferredDate\": \"2024-02-20\",\n    \"preferredTime\": \"2:00 PM\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Submit Installation Enquiry (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"installation\",\n  \"customerName\": \"Hassan Raza\",\n  \"customerPhone\": \"03004444444\",\n  \"customerWhatsApp\": \"03004444444\",\n  \"data\": {\n    \"city\": \"Karachi\",\n    \"area\": \"Gulshan-e-Iqbal\",\n    \"propertyType\": \"residential\",\n    \"monthlyBill\": \"PKR 8000\",\n    \"systemSize\": \"5kW\",\n    \"batteryRequired\": true,\n    \"existingSolarSystem\": false,\n    \"additionalRequirements\": \"Need net metering setup\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get All Leads (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/leads?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["api","leads"],
+              "query": [
+                { "key": "type", "value": "", "disabled": true, "description": "product_enquiry|technical_support|video_call|site_visit|installation|contact" },
+                { "key": "status", "value": "", "disabled": true, "description": "new|contacted|in_progress|scheduled|completed|resolved|cancelled" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lead by ID (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/leads/LEAD_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","leads","LEAD_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Update Lead Status (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads/LEAD_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","leads","LEAD_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\",\n  \"adminNote\": \"Called customer, scheduled site visit for next week\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Lead (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/leads/LEAD_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","leads","LEAD_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Submit Lead — Invalid Type (expect 400)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/leads", "host": ["{{baseUrl}}"], "path": ["api","leads"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"unknown_type\",\n  \"customerName\": \"Test\",\n  \"customerPhone\": \"0300000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Notifications",
+      "item": [
+        {
+          "name": "Get Notifications (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["api","notifications"],
+              "query": [
+                { "key": "unread", "value": "true", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Count (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/notifications/unread-count", "host": ["{{baseUrl}}"], "path": ["api","notifications","unread-count"] }
+          }
+        },
+        {
+          "name": "Mark Notification as Read (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/notifications/NOTIFICATION_ID_HERE/read", "host": ["{{baseUrl}}"], "path": ["api","notifications","NOTIFICATION_ID_HERE","read"] }
+          }
+        },
+        {
+          "name": "Mark All as Read (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/notifications/read-all", "host": ["{{baseUrl}}"], "path": ["api","notifications","read-all"] }
+          }
+        },
+        {
+          "name": "Delete Notification (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/notifications/NOTIFICATION_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","notifications","NOTIFICATION_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Settings",
+      "item": [
+        {
+          "name": "Get Public Settings (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/settings", "host": ["{{baseUrl}}"], "path": ["api","settings"] },
+            "description": "Returns safe public fields only. Omits googleAnalyticsId, facebookPixelId, and image publicIds."
+          }
+        },
+        {
+          "name": "Get Admin Settings (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/settings/admin", "host": ["{{baseUrl}}"], "path": ["api","settings","admin"] }
+          }
+        },
+        {
+          "name": "Update Settings (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/settings", "host": ["{{baseUrl}}"], "path": ["api","settings"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "businessName", "value": "Solar Pro Pakistan", "type": "text" },
+                { "key": "tagline", "value": "Pakistan's Trusted Solar Partner", "type": "text" },
+                { "key": "phone", "value": "+92-300-1234567", "type": "text" },
+                { "key": "whatsappNumber", "value": "923001234567", "type": "text" },
+                { "key": "email", "value": "info@solarpro.pk", "type": "text" },
+                { "key": "address", "value": "123 Main Blvd, Lahore", "type": "text" },
+                { "key": "city", "value": "Lahore", "type": "text" },
+                { "key": "country", "value": "Pakistan", "type": "text" },
+                { "key": "currency", "value": "PKR", "type": "text" },
+                { "key": "serviceAreas", "value": "[\"Lahore\",\"Karachi\",\"Islamabad\"]", "type": "text" },
+                { "key": "metaTitle", "value": "Solar Pro Pakistan | Best Solar Inverters", "type": "text" },
+                { "key": "socialLinks", "value": "{\"facebook\":\"https://facebook.com/solarpro\",\"instagram\":\"https://instagram.com/solarpro\"}", "type": "text" },
+                { "key": "logo", "src": [], "type": "file" },
+                { "key": "favicon", "src": [], "type": "file" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Media",
+      "item": [
+        {
+          "name": "Upload Media (admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/media/upload", "host": ["{{baseUrl}}"], "path": ["api","media","upload"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "src": [], "type": "file", "description": "Any image, video, or audio file" },
+                { "key": "folder", "value": "solar-platform/media", "type": "text" },
+                { "key": "alt", "value": "Solar panel installation photo", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Media List (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/media?type=image&page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["api","media"],
+              "query": [
+                { "key": "type", "value": "image", "description": "image|video|audio|document" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Media (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/media/MEDIA_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api","media","MEDIA_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/dashboard", "host": ["{{baseUrl}}"], "path": ["api","dashboard"] }
+          }
+        },
+        {
+          "name": "Dashboard — No Auth (expect 401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/dashboard", "host": ["{{baseUrl}}"], "path": ["api","dashboard"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 Analytics",
+      "item": [
+        {
+          "name": "Track Event — product_view (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/events", "host": ["{{baseUrl}}"], "path": ["api","analytics","events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"product_view\",\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"metadata\": { \"source\": \"homepage\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Track Event — whatsapp_click (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/events", "host": ["{{baseUrl}}"], "path": ["api","analytics","events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"whatsapp_click\",\n  \"metadata\": { \"page\": \"product-detail\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Track Event — Invalid Type (expect 400)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/events", "host": ["{{baseUrl}}"], "path": ["api","analytics","events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"eventType\": \"unknown_event\" }",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get Analytics Summary (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics?days=30",
+              "host": ["{{baseUrl}}"], "path": ["api","analytics"],
+              "query": [{ "key": "days", "value": "30", "description": "1–90" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 Global Search",
+      "item": [
+        {
+          "name": "Global Search (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search?q=inverter+error&limit=5",
+              "host": ["{{baseUrl}}"], "path": ["api","search"],
+              "query": [
+                { "key": "q", "value": "inverter error", "description": "Min 2 characters" },
+                { "key": "limit", "value": "5", "description": "Results per content type, max 10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search — Too Short (expect 400)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/search?q=a", "host": ["{{baseUrl}}"], "path": ["api","search"], "query": [{ "key": "q", "value": "a" }] }
+          }
+        },
+        {
+          "name": "Search — No Query (expect 400)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/search", "host": ["{{baseUrl}}"], "path": ["api","search"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "00 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api","health"] }
+          }
+        }
+      ]
+    }
+  ]
+}

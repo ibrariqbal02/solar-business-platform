@@ -46,7 +46,7 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
   try {
     const id = req.params.id as string;
     if (!isValidId(id)) { res.status(400).json({ success: false, message: "Invalid notification ID" }); return; }
-    const n = await Notification.findByIdAndUpdate(id, { isRead: true, readAt: new Date() }, { new: true });
+    const n = await Notification.findByIdAndUpdate(id, { isRead: true, readAt: new Date() }, { returnDocument: "after" });
     if (!n) { res.status(404).json({ success: false, message: "Notification not found" }); return; }
     res.status(200).json({ success: true, message: "Marked as read", data: n });
   } catch (error: any) {

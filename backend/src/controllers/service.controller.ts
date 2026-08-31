@@ -339,7 +339,7 @@ export const toggleServiceStatus = async (req: Request, res: Response): Promise<
     const service = await Service.findByIdAndUpdate(
       id,
       { isActive: isActive === true || isActive === "true" },
-      { new: true, select: "_id name isActive" }
+      { returnDocument: "after", select: "_id name isActive" }
     );
 
     if (!service) {

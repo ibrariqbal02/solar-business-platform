@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, AccessTokenPayload } from "../utils/jwt.js";
 import Admin from "../models/admin.model.js";
 
-// ─── Extend Express Request ───────────────────────────────────────────────────
-
 declare global {
   namespace Express {
     interface Request {
@@ -15,13 +13,7 @@ declare global {
   }
 }
 
-// ─── requireAuth ─────────────────────────────────────────────────────────────
 
-/**
- * Validates the Bearer access token from the Authorization header.
- * Attaches req.admin = { id, role } on success.
- * Returns 401 for missing/invalid tokens, 403 for inactive accounts.
- */
 export const requireAuth = async (
   req: Request,
   res: Response,
@@ -58,12 +50,7 @@ export const requireAuth = async (
   }
 };
 
-// ─── requireRole ─────────────────────────────────────────────────────────────
 
-/**
- * Role-based access control. Must be used after requireAuth.
- * Usage: router.delete("/...", requireAuth, requireRole("super_admin"), handler)
- */
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.admin) {

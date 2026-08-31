@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
+import mongoose from "mongoose";
 import AnalyticsEvent from "../models/analytics-event.model.js";
 
 const ALLOWED_EVENT_TYPES = [
@@ -40,7 +41,7 @@ export const trackEvent = async (req: Request, res: Response): Promise<void> => 
 
     await AnalyticsEvent.create({
       eventType,
-      product:   productId ?? undefined,
+      product:   (productId && mongoose.Types.ObjectId.isValid(productId)) ? productId : undefined,
       ipAddress: req.ip,
       userAgent: req.headers["user-agent"],
       sessionId: req.headers["x-session-id"] as string | undefined,

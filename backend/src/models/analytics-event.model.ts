@@ -1,6 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export type EventType = "product_view" | "product_enquiry" | "page_view" | "search";
+export type EventType =
+  | "product_view"
+  | "product_enquiry"
+  | "page_view"
+  | "search"
+  | "whatsapp_click"
+  | "technical_support_click"
+  | "video_call_request"
+  | "site_visit_request"
+  | "installation_request"
+  | "contact_form_submitted"
+  | "youtube_video_clicked";
 
 export interface IAnalyticsEvent extends Document {
   eventType: EventType;
@@ -18,7 +29,12 @@ const analyticsEventSchema = new Schema<IAnalyticsEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["product_view", "product_enquiry", "page_view", "search"],
+      enum: [
+        "product_view", "product_enquiry", "page_view", "search",
+        "whatsapp_click", "technical_support_click", "video_call_request",
+        "site_visit_request", "installation_request", "contact_form_submitted",
+        "youtube_video_clicked",
+      ],
       index: true,
     },
     product: {

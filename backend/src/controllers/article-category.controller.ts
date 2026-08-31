@@ -263,7 +263,7 @@ export const toggleArticleCategoryStatus = async (req: Request, res: Response): 
     const category = await ArticleCategory.findByIdAndUpdate(
       id,
       { isActive: isActive === true || isActive === "true" },
-      { new: true, select: "_id name slug isActive" }
+      { returnDocument: "after", select: "_id name slug isActive" }
     );
     if (!category) {
       res.status(404).json({ success: false, message: "Article category not found" });
