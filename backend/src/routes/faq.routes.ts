@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { cachePublic } from "../middleware/cache.middleware.js";
 import {
   createFAQ,
   getFAQs,
@@ -15,7 +16,7 @@ const router = Router();
 
 // ─── Public ───────────────────────────────────────────────────────────────────
 router.get("/",        getFAQs);
-router.get("/active",  getActiveFAQs);
+router.get("/active",  cachePublic, getActiveFAQs);
 router.get("/:id",     getFAQById);
 
 // ─── Protected (admin) ────────────────────────────────────────────────────────

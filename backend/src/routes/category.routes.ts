@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multerImage from "../config/multer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { cachePublic } from "../middleware/cache.middleware.js";
 import {
   createCategory,
   getAllCategories,
@@ -13,7 +14,7 @@ import {
 const router = Router();
 
 // ─── Public ───────────────────────────────────────────────────────────────────
-router.get("/",             getAllCategories);
+router.get("/",             cachePublic, getAllCategories);
 router.get("/:identifier",  getCategoryById);
 
 // ─── Protected (admin) ────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import { Router } from "express";
 import multerImage from "../config/multer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { adminWriteLimiter } from "../middleware/userRateLimit.middleware.js";
+import { cachePublic } from "../middleware/cache.middleware.js";
 import {
   createProduct,
   getAllProducts,
@@ -20,7 +21,7 @@ import {
 const router = Router();
 
 // ─── Public ───────────────────────────────────────────────────────────────────
-router.get("/",                  getAllProducts);
+router.get("/",                  cachePublic, getAllProducts);
 router.get("/slug/:slug",        getProductBySlug);
 router.get("/id/:id",            getProductById);
 router.get("/:id/related",       getRelatedProducts);

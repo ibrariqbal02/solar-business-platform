@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multerImage from "../config/multer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { cachePublic } from "../middleware/cache.middleware.js";
 import {
   createService,
   getServices,
@@ -14,7 +15,7 @@ import {
 const router = Router();
 
 // ─── Public ───────────────────────────────────────────────────────────────────
-router.get("/",              getServices);
+router.get("/",              cachePublic, getServices);
 router.get("/slug/:slug",    getServiceBySlug);
 router.get("/id/:id",        getServiceById);
 

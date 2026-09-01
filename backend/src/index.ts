@@ -1,4 +1,5 @@
 import "dotenv/config";
+import * as Sentry from "@sentry/node";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -7,6 +8,15 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import connectDatabase from "./config/db.js";
 import { connectCloudinary } from "./config/cloudinary.js";
+
+// ─── Sentry (initialise before anything else so it can instrument modules) ────
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? "development",
+    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1.0,
+  });
+}
 
 // ─── Route imports ────────────────────────────────────────────────────────────
 import authRoutes             from "./routes/auth.routes.js";
@@ -26,6 +36,8 @@ import mediaRoutes            from "./routes/media.routes.js";
 import dashboardRoutes        from "./routes/dashboard.routes.js";
 import analyticsRoutes        from "./routes/analytics.routes.js";
 import searchRoutes           from "./routes/search.routes.js";
+import seoRoutes              from "./routes/seo.routes.js";
+import legalRoutes            from "./routes/legal.routes.js";
 
 // ─── Error middleware ─────────────────────────────────────────────────────────
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
@@ -95,12 +107,20 @@ app.use("/api/media",              mediaRoutes);
 app.use("/api/dashboard",          dashboardRoutes);
 app.use("/api/analytics",          analyticsRoutes);
 app.use("/api/search",             searchRoutes);
+app.use("/api/legal",              legalRoutes);
+
+// ─── SEO: sitemap + robots (no rate limiting, no auth) ───────────────────────
+app.use(seoRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ success: true, message: "Solar Business Platform API is running" });
 });
 
 // ─── Error handling (must be last) ────────────────────────────────────────────
+// Sentry error handler must come before the custom error handler
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 app.use(notFoundHandler);
 app.use(errorHandler);
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { cachePublic } from "../middleware/cache.middleware.js";
 import { getPublicSettings, getAdminSettings, updateSettings } from "../controllers/settings.controller.js";
 
 // Accept logo + favicon as separate fields
@@ -9,7 +10,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 *
 const router = Router();
 
 // Public
-router.get("/",         getPublicSettings);
+router.get("/",         cachePublic, getPublicSettings);
 
 // Admin
 router.get("/admin",    requireAuth, getAdminSettings);

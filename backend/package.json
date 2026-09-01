@@ -8,13 +8,16 @@
     "start": "node dist/index.js",
     "test": "vitest run --reporter=verbose",
     "test:watch": "vitest --reporter=verbose",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "backup:db": "mongodump --uri \"$MONGO_URI\" --out \"backups/$(date +%Y-%m-%dT%H-%M-%S)\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@sentry/node": "10.73.0",
+    "apicache": "1.6.3",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
@@ -31,6 +34,7 @@
     "sanitize-html": "2.13.1"
   },
   "devDependencies": {
+    "@types/apicache": "1.6.8",
     "@types/bcryptjs": "^3.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
