@@ -136,10 +136,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       setAuth,
+      setToken: _storeToken,
       clearAuth,
       getAccessToken,
     }),
-    [admin, accessToken, isLoading, initAuth, login, logout, setAuth, clearAuth, getAccessToken],
+    [admin, accessToken, isLoading, initAuth, login, logout, setAuth, _storeToken, clearAuth, getAccessToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
