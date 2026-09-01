@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import connectDatabase from "./config/db.js";
@@ -35,24 +36,43 @@ const app: Application = express();
 connectDatabase();
 connectCloudinary();
 
-// ─── Security middleware ──────────────────────────────────────────────────────
-app.use(helmet());
+// ─── CORS — require explicit origins in production ────────────────────────────
+const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction && !process.env.ALLOWED_ORIGINS) {
+  console.error(
+    "[FATAL] ALLOWED_ORIGINS env var is required in production. " +
+    "Set it to a comma-separated list of allowed origins (e.g. https://example.com)."
+  );
+  process.exit(1);
+}
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000")
   .split(",")
-  .map((o) => o.trim());
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+// ─── Security middleware ──────────────────────────────────────────────────────
+app.use(helmet());
+
+// ─── Request logging ──────────────────────────────────────────────────────────
+app.use(morgan(isProduction ? "combined" : "dev"));
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-      else callback(new Error(`CORS: origin ${origin} not allowed`));
+      // Allow server-to-server requests (no origin) only in non-production
+      if (!origin && !isProduction) return callback(null, true);
+      if (origin && allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin ?? "(none)"} not allowed`));
     },
     credentials: true,
   })
 );
 
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: "draft-8", legacyHeaders: false }));
+
+// ─── Body parsing with explicit size limits ───────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());

@@ -6,6 +6,7 @@ import Video from "../models/video.model.js";
 import Product from "../models/product.model.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 import deleteFromCloudinary from "../utils/deleteFromCloudinary.js";
+import { sanitizeRichText, sanitizeRichTextArray } from "../utils/sanitizeHtml.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -123,10 +124,10 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     const article = await Article.create({
       title:                title.trim(),
       excerpt:              excerpt?.trim(),
-      description:          description?.trim(),
-      technicalExplanation: technicalExplanation?.trim(),
-      troubleshootingSteps: parseStringArray(req.body.troubleshootingSteps),
-      safetyInformation:    safetyInformation?.trim(),
+      description:          sanitizeRichText(description?.trim()),
+      technicalExplanation: sanitizeRichText(technicalExplanation?.trim()),
+      troubleshootingSteps: sanitizeRichTextArray(parseStringArray(req.body.troubleshootingSteps)),
+      safetyInformation:    sanitizeRichText(safetyInformation?.trim()),
       category,
       relatedVideos:   relatedVideoIds,
       relatedProducts: relatedProductIds,
@@ -341,12 +342,12 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     }
 
     if (excerpt              !== undefined) article.excerpt              = excerpt.trim();
-    if (description          !== undefined) article.description          = description.trim();
-    if (technicalExplanation !== undefined) article.technicalExplanation = technicalExplanation.trim();
-    if (safetyInformation    !== undefined) article.safetyInformation    = safetyInformation.trim();
+    if (description          !== undefined) article.description          = sanitizeRichText(description.trim());
+    if (technicalExplanation !== undefined) article.technicalExplanation = sanitizeRichText(technicalExplanation.trim());
+    if (safetyInformation    !== undefined) article.safetyInformation    = sanitizeRichText(safetyInformation.trim());
 
     if (req.body.troubleshootingSteps !== undefined)
-      article.troubleshootingSteps = parseStringArray(req.body.troubleshootingSteps, article.troubleshootingSteps);
+      article.troubleshootingSteps = sanitizeRichTextArray(parseStringArray(req.body.troubleshootingSteps, article.troubleshootingSteps));
     if (req.body.tags !== undefined)
       article.tags = parseStringArray(req.body.tags, article.tags);
 

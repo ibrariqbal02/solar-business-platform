@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multerImage from "../config/multer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { adminWriteLimiter } from "../middleware/userRateLimit.middleware.js";
 import {
   createProduct,
   getAllProducts,
@@ -27,11 +28,11 @@ router.post("/:id/enquiry",      submitProductEnquiry);
 router.post("/:id/view",         trackProductView);
 
 // ─── Protected (admin) ────────────────────────────────────────────────────────
-router.post(  "/",               requireAuth, multerImage.array("images", 10), createProduct);
-router.put(   "/:id",            requireAuth, multerImage.array("images", 10), updateProduct);
-router.delete("/:id",            requireAuth, deleteProduct);
-router.patch( "/:id/featured",   requireAuth, toggleFeatured);
-router.patch( "/:id/stock",      requireAuth, updateStock);
-router.patch( "/:id/restore",    requireAuth, restoreProduct);
+router.post(  "/",               requireAuth, adminWriteLimiter, multerImage.array("images", 10), createProduct);
+router.put(   "/:id",            requireAuth, adminWriteLimiter, multerImage.array("images", 10), updateProduct);
+router.delete("/:id",            requireAuth, adminWriteLimiter, deleteProduct);
+router.patch( "/:id/featured",   requireAuth, adminWriteLimiter, toggleFeatured);
+router.patch( "/:id/stock",      requireAuth, adminWriteLimiter, updateStock);
+router.patch( "/:id/restore",    requireAuth, adminWriteLimiter, restoreProduct);
 
 export default router;

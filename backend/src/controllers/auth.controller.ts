@@ -10,6 +10,7 @@ import {
   toSafeAdmin,
 } from "../services/auth.service.js";
 import Admin from "../models/admin.model.js";
+import { issueCsrfCookie } from "../middleware/csrf.middleware.js";
 
 
 const REFRESH_COOKIE_NAME = "refreshToken";
@@ -99,6 +100,10 @@ export const loginAdmin = async (req: Request, res: Response): Promise<void> => 
     });
 
     res.cookie(REFRESH_COOKIE_NAME, tokens.refreshToken, refreshCookieOptions(tokens.refreshExpiresAt));
+
+    // Issue CSRF token alongside the refresh cookie so the client can
+    // include it in subsequent refresh/logout requests.
+    issueCsrfCookie(res);
 
     res.status(200).json({
       success: true,

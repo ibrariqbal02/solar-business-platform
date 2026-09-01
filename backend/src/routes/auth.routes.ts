@@ -11,6 +11,7 @@ import {
   resetPassword,
 } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { verifyCsrf } from "../middleware/csrf.middleware.js";
 
 const router = Router();
 
@@ -52,10 +53,10 @@ router.post("/register", registerLimiter, registerAdmin);
 router.post("/login", loginLimiter, loginAdmin);
 
 // POST /api/auth/refresh       — rotate refresh token, issue new access token
-router.post("/refresh", refreshAccessToken);
+router.post("/refresh", verifyCsrf, refreshAccessToken);
 
 // POST /api/auth/logout        — revoke refresh token, clear cookie
-router.post("/logout", logoutAdmin);
+router.post("/logout", verifyCsrf, logoutAdmin);
 
 // POST /api/auth/forgot-password
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
