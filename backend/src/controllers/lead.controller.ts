@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
 import Lead from "../models/lead.model.js";
 import Notification from "../models/notification.model.js";
+import WebsiteSettings from "../models/website-settings.model.js";
+import { sendEmail } from "../config/email.js";
 
 const isValidId = (id: string) => mongoose.Types.ObjectId.isValid(id);
 
@@ -26,6 +28,72 @@ const createLeadNotification = (leadId: mongoose.Types.ObjectId, type: string, c
     message:     `New ${type.replace(/_/g, " ")} from ${customerName}`,
     type:        type as any,
     relatedLead: leadId,
+  }).catch(() => {});
+};
+
+// Helper: email the business owner about a new lead (non-blocking, best-effort)
+const notifyOwnerByEmail = (type: string, customerName: string, customerPhone: string) => {
+  WebsiteSettings.findOne().select("email businessName").lean().then((settings) => {
+    const ownerEmail   = settings?.email;
+    const businessName = settings?.businessName ?? "Solar Business Platform";
+    if (!ownerEmail) return;   // no owner email configured — skip silently
+
+    const readableType = type.replace(/_/g, " ");
+    const subject = `New ${readableType} — ${businessName}`;
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0"
+        style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#f59e0b;padding:24px 32px;">
+            <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">☀️ ${businessName}</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <h2 style="margin:0 0 16px;color:#1f2937;font-size:18px;">New ${readableType}</h2>
+            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:14px;width:40%;">Lead Type</td>
+                <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#1f2937;font-size:14px;font-weight:600;">${readableType}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:14px;">Customer Name</td>
+                <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#1f2937;font-size:14px;font-weight:600;">${customerName}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;color:#6b7280;font-size:14px;">Phone</td>
+                <td style="padding:10px 0;color:#1f2937;font-size:14px;font-weight:600;">${customerPhone}</td>
+              </tr>
+            </table>
+            <p style="margin:24px 0 0;color:#6b7280;font-size:13px;">
+              Log in to your admin dashboard to view full details and update the lead status.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb;text-align:center;">
+            <p style="margin:0;color:#9ca3af;font-size:12px;">
+              This is an automated notification from ${businessName}.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `New ${readableType} — ${businessName}\n\nLead Type: ${readableType}\nCustomer Name: ${customerName}\nPhone: ${customerPhone}\n\nLog in to your dashboard to view details.`;
+
+    sendEmail({ to: ownerEmail, subject, html, text }).then((ok) => {
+      if (!ok) console.error("[Lead] Owner notification email failed for lead type:", type);
+    });
   }).catch(() => {});
 };
 
@@ -69,6 +137,7 @@ export const submitLead = async (req: Request, res: Response): Promise<void> => 
     });
 
     createLeadNotification(lead._id as mongoose.Types.ObjectId, type, customerName.trim());
+    notifyOwnerByEmail(type, customerName.trim(), customerPhone.trim());
 
     res.status(201).json({ success: true, message: "Enquiry submitted successfully", data: { _id: lead._id, type: lead.type } });
   } catch (error: any) {

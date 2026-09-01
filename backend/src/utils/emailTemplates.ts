@@ -7,10 +7,11 @@ export const passwordResetTemplate = (params: {
   adminName: string;
   resetUrl: string;
   expiryMinutes: number;
+  businessName?: string;
 }): { subject: string; html: string; text: string } => {
-  const { adminName, resetUrl, expiryMinutes } = params;
+  const { adminName, resetUrl, expiryMinutes, businessName = "Solar Business Platform" } = params;
 
-  const subject = "Reset Your Password — Solar Business Platform";
+  const subject = `Reset Your Password — ${businessName}`;
 
   const html = `
 <!DOCTYPE html>
@@ -31,7 +32,7 @@ export const passwordResetTemplate = (params: {
           <tr>
             <td style="background-color:#f59e0b;padding:32px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.5px;">
-                ☀️ Solar Business Platform
+                ☀️ ${businessName}
               </h1>
             </td>
           </tr>
@@ -86,7 +87,7 @@ export const passwordResetTemplate = (params: {
           <tr>
             <td style="background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center;">
               <p style="margin:0;color:#9ca3af;font-size:12px;">
-                This email was sent by Solar Business Platform Admin System.<br />
+                This email was sent by ${businessName} Admin System.<br />
                 Do not reply to this email.
               </p>
             </td>
@@ -101,7 +102,7 @@ export const passwordResetTemplate = (params: {
 `;
 
   const text = `
-Password Reset Request — Solar Business Platform
+Password Reset Request — ${businessName}
 
 Hi ${adminName},
 
@@ -112,7 +113,7 @@ ${resetUrl}
 
 If you didn't request this, please ignore this email. Your password will not be changed.
 
-— Solar Business Platform
+— ${businessName}
 `.trim();
 
   return { subject, html, text };

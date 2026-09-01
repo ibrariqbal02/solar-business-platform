@@ -11,6 +11,9 @@ import {
 } from "../services/auth.service.js";
 import Admin from "../models/admin.model.js";
 import { issueCsrfCookie } from "../middleware/csrf.middleware.js";
+import { sendEmail } from "../config/email.js";
+import { passwordResetTemplate } from "../utils/emailTemplates.js";
+import WebsiteSettings from "../models/website-settings.model.js";
 
 
 const REFRESH_COOKIE_NAME = "refreshToken";
@@ -250,17 +253,49 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     const result = await forgotPasswordService(email);
 
-    // ── Development: expose token for testing ─────────────────────────────────
-    // !! NEVER expose this in production or test environments !!
-    if (process.env.NODE_ENV === "development" && result) {
-      res.status(200).json({
-        success: true,
-        message: "If that email exists, a reset link has been sent.",
-        _dev_resetToken: result.rawToken,   // DEVELOPMENT ONLY — remove before production
+    if (result) {
+      // ── Build reset URL ──────────────────────────────────────────────────
+      const frontendBase =
+        (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000")
+          .split(",")[0]
+          .trim()
+          .replace(/\/$/, "");
+      const resetUrl = `${frontendBase}/reset-password?token=${result.rawToken}`;
+
+      // ── Fetch admin name + business name for the email template ──────────
+      const [admin, settings] = await Promise.all([
+        Admin.findById(result.adminId).select("name"),
+        WebsiteSettings.findOne().select("businessName"),
+      ]);
+      const adminName    = admin?.name ?? "Admin";
+      const businessName = settings?.businessName ?? "Solar Business Platform";
+      const expiryMinutes = parseInt(process.env.JWT_RESET_EXPIRES_IN ?? "15m") || 15;
+
+      // ── Build template ───────────────────────────────────────────────────
+      const { subject, html, text } = passwordResetTemplate({
+        adminName,
+        resetUrl,
+        expiryMinutes,
+        businessName,
       });
-      return;
+
+      // ── Send email (non-blocking on failure) ─────────────────────────────
+      sendEmail({ to: email.trim(), subject, html, text }).then((ok) => {
+        if (!ok) console.error("[Auth] Password reset email failed for:", email.trim());
+      });
+
+      // ── Development only: expose raw token for testing ───────────────────
+      if (process.env.NODE_ENV === "development") {
+        res.status(200).json({
+          success: true,
+          message: "If that email exists, a reset link has been sent.",
+          _dev_resetToken: result.rawToken,   // DEVELOPMENT ONLY
+        });
+        return;
+      }
     }
-    // ── Production: generic response ──────────────────────────────────────────
+
+    // Generic response — never reveals whether email exists
     res.status(200).json({
       success: true,
       message: "If that email exists, a reset link has been sent.",

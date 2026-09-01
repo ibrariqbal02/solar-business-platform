@@ -13,6 +13,13 @@ beforeAll(async () => {
   process.env.JWT_REFRESH_EXPIRES_IN = "7d";
   process.env.ADMIN_REGISTRATION_KEY = "test-reg-key";
   process.env.NODE_ENV = "test";
+  // Provide stub email env vars so the transporter doesn't throw during tests.
+  // Actual sends are intercepted by the nodemailer mock in tests/setup.ts.
+  process.env.EMAIL_HOST = "smtp.test.invalid";
+  process.env.EMAIL_PORT = "587";
+  process.env.EMAIL_USER = "test@test.invalid";
+  process.env.EMAIL_PASS = "test-password";
+  process.env.EMAIL_FROM = '"Test" <test@test.invalid>';
   app = await buildApp();
 });
 
