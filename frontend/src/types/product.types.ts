@@ -18,6 +18,7 @@ export interface Category {
   slug: string;
   description?: string;
   image?: string;
+  imagePublicId?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

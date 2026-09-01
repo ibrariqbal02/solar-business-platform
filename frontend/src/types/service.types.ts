@@ -15,6 +15,7 @@ export interface Service {
   shortDescription?: string;
   description?: string;
   image?: string;
+  imagePublicId?: string;
   areas: string[];      // coverage areas e.g. ["Lahore", "Karachi"]
   features: string[];   // key bullet points
   cta: IServiceCTA;

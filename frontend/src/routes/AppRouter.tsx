@@ -26,10 +26,18 @@ import SearchResults         from '../pages/public/SearchResults';
 import Login                 from '../pages/admin/Login';
 import AdminDashboard        from '../pages/admin/Dashboard';
 import AdminProducts         from '../pages/admin/Products';
+import CreateProduct         from '../pages/admin/products/CreateProduct';
+import EditProduct           from '../pages/admin/products/EditProduct';
 import AdminCategories       from '../pages/admin/Categories';
+import CreateCategory        from '../pages/admin/categories/CreateCategory';
+import EditCategory          from '../pages/admin/categories/EditCategory';
 import AdminServices         from '../pages/admin/Services';
+import CreateService         from '../pages/admin/services/CreateService';
+import EditService           from '../pages/admin/services/EditService';
 import AdminVideos           from '../pages/admin/Videos';
+import AdminVideoCategories  from '../pages/admin/videos/VideoCategoriesPage';
 import AdminArticles         from '../pages/admin/Articles';
+import AdminArticleCategories from '../pages/admin/articles/ArticleCategoriesPage';
 import AdminFAQs             from '../pages/admin/FAQs';
 import AdminTestimonials     from '../pages/admin/Testimonials';
 import AdminLeads            from '../pages/admin/Leads';
@@ -69,10 +77,18 @@ export default function AppRouter() {
         <Route path="admin" element={<AdminLayout />}>
           <Route index                          element={<AdminDashboard />} />
           <Route path="products"               element={<AdminProducts />} />
+          <Route path="products/new"          element={<CreateProduct />} />
+          <Route path="products/edit/:id"     element={<EditProduct />} />
           <Route path="categories"             element={<AdminCategories />} />
+          <Route path="categories/new"        element={<CreateCategory />} />
+          <Route path="categories/edit/:id"   element={<EditCategory />} />
           <Route path="services"               element={<AdminServices />} />
+          <Route path="services/new"          element={<CreateService />} />
+          <Route path="services/edit/:id"     element={<EditService />} />
           <Route path="videos"                 element={<AdminVideos />} />
+          <Route path="video-categories"      element={<AdminVideoCategories />} />
           <Route path="articles"               element={<AdminArticles />} />
+          <Route path="article-categories"    element={<AdminArticleCategories />} />
           <Route path="faqs"                   element={<AdminFAQs />} />
           <Route path="testimonials"           element={<AdminTestimonials />} />
           <Route path="leads"                  element={<AdminLeads />} />
