@@ -8,6 +8,7 @@ import { useSettings } from '../../hooks/useSettings';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { imageUrl } from '../../lib/utils';
 import { ROUTES } from '../../lib/constants';
+import { trackEvent } from '../../lib/analytics';
 import type { IServiceCTA } from '../../types/service.types';
 
 // ── CTA button ────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ function CtaButton({ cta, whatsappNumber, serviceName }: CtaButtonProps) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackEvent({ eventType: 'whatsapp_click', metadata: { source: 'service_cta', serviceName } })}
         className={`${baseClass} bg-green-600 hover:bg-green-700 text-white`}
       >
         <Phone className="h-4 w-4" />

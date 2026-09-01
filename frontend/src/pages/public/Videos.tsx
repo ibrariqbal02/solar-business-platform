@@ -6,6 +6,7 @@ import { useVideos } from '../../hooks/useVideos';
 import { useVideoCategories } from '../../hooks/useVideos';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { youtubeThumbnail, youtubeEmbedUrl } from '../../types/video.types';
+import { trackEvent } from '../../lib/analytics';
 import type { VideoListItem, VideosQuery, VideoSortKey } from '../../types/video.types';
 
 // ── Video card skeleton ────────────────────────────────────────────────────────
@@ -194,7 +195,10 @@ export default function Videos() {
 
   const videos = data?.videos ?? [];
 
-  const handlePlay   = useCallback((v: VideoListItem) => setPlayingVideo(v), []);
+  const handlePlay   = useCallback((v: VideoListItem) => {
+    trackEvent({ eventType: 'youtube_video_clicked', metadata: { videoId: v.youtubeVideoId, title: v.title } });
+    setPlayingVideo(v);
+  }, []);
   const handleClose  = useCallback(() => setPlayingVideo(null), []);
   const handleCatTab = useCallback((id: string) => setActiveCategory(id), []);
 

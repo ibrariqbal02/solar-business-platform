@@ -1,31 +1,39 @@
 import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-// ─── Auth accessors (set once from AuthProvider mount) ───────────────────────
-// Using module-level functions avoids circular imports between client ↔ context.
+// ─── Auth accessors (registered by App.tsx after mount) ──────────────────────
+// Module-level to avoid circular imports between client ↔ context.
 
 let _getAccessToken: (() => string | null) | null = null;
+let _setAccessToken: ((token: string) => void) | null = null;
 let _clearAuth: (() => void) | null = null;
 
 export function registerAuthAccessors(
   getToken: () => string | null,
+  setToken: (token: string) => void,
   clearAuth: () => void,
 ) {
   _getAccessToken = getToken;
-  _clearAuth = clearAuth;
+  _setAccessToken = setToken;
+  _clearAuth      = clearAuth;
 }
 
-// ─── Axios instance ──────────────────────────────────────────────────────────
+// ─── CSRF helper (mirrors csrf.middleware.ts) ────────────────────────────────
+
+function getCsrfToken(): string {
+  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+// ─── Axios instance ───────────────────────────────────────────────────────────
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api',
-  withCredentials: true, // send the refresh-token cookie on every request
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request interceptor — attach access token ───────────────────────────────
+// ─── Request interceptor — attach Bearer token ───────────────────────────────
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -38,20 +46,15 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ─── Response interceptor — silent token refresh on 401 ─────────────────────
+// ─── Response interceptor — silent 401 refresh ───────────────────────────────
 
 let isRefreshing = false;
-// Queue of { resolve, reject } for requests that arrived during a refresh
 type QueueItem = { resolve: (token: string) => void; reject: (err: unknown) => void };
 let failedQueue: QueueItem[] = [];
 
 function processQueue(error: unknown, token: string | null) {
   failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token as string);
-    }
+    error ? reject(error) : resolve(token as string);
   });
   failedQueue = [];
 }
@@ -59,57 +62,46 @@ function processQueue(error: unknown, token: string | null) {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    };
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Only attempt refresh on 401, and only once per request
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    // Only intercept 401s, only once per request
+    if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }
 
     if (isRefreshing) {
-      // Another refresh is already in flight — queue this request
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          if (originalRequest.headers) {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
-          }
-          return apiClient(originalRequest);
-        })
-        .catch((err) => Promise.reject(err));
+      }).then((token) => {
+        if (original.headers) original.headers['Authorization'] = `Bearer ${token}`;
+        return apiClient(original);
+      });
     }
 
-    originalRequest._retry = true;
-    isRefreshing = true;
+    original._retry = true;
+    isRefreshing    = true;
 
     try {
-      // The refresh token lives in an HttpOnly cookie — no body needed
-      const { data } = await axios.post<{ data?: { accessToken?: string }; accessToken?: string }>(
+      const { data } = await axios.post<{ data?: { accessToken?: string } }>(
         `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api'}/auth/refresh`,
         {},
-        { withCredentials: true },
+        {
+          withCredentials: true,
+          headers: { 'x-csrf-token': getCsrfToken() },
+        },
       );
 
-      const newToken =
-        data?.data?.accessToken ?? (data as { accessToken?: string })?.accessToken ?? '';
+      const newToken = data?.data?.accessToken ?? '';
 
-      // Let the context know about the new token (if accessors are wired)
-      // We only have getAccessToken here; the full setAuth is in AuthProvider.
-      // For now we update the in-flight request and queue; the app will sync
-      // the token on the next render via AuthProvider's useEffect watcher.
+      // Sync the new token into AuthContext so subsequent requests use it
+      if (newToken) _setAccessToken?.(newToken);
+
       processQueue(null, newToken);
 
-      if (originalRequest.headers) {
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-      }
-
-      return apiClient(originalRequest);
+      if (original.headers) original.headers['Authorization'] = `Bearer ${newToken}`;
+      return apiClient(original);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      // Refresh failed — clear auth and let the router redirect to login
       _clearAuth?.();
       return Promise.reject(refreshError);
     } finally {

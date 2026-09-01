@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../../lib/constants';
 import { useSettings } from '../../hooks/useSettings';
+import { trackEvent } from '../../lib/analytics';
 
 const quickLinks = [
   { label: 'Products', to: ROUTES.products },
@@ -114,6 +115,20 @@ export default function Footer() {
                     className="flex items-start gap-2 hover:text-amber-400 transition-colors">
                     <Phone className="h-4 w-4 mt-0.5 shrink-0" />
                     {settings.phone}
+                  </a>
+                </li>
+              )}
+              {settings?.whatsappNumber && (
+                <li>
+                  <a
+                    href={`https://wa.me/${settings.whatsappNumber.replace(/\D/g, '')}?text=Hi! I have an enquiry.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackEvent({ eventType: 'whatsapp_click', metadata: { source: 'footer' } })}
+                    className="flex items-start gap-2 hover:text-green-400 transition-colors"
+                  >
+                    <Phone className="h-4 w-4 mt-0.5 shrink-0 text-green-400" />
+                    WhatsApp: {settings.whatsappNumber}
                   </a>
                 </li>
               )}

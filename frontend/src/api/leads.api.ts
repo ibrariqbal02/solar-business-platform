@@ -1,35 +1,31 @@
 import apiClient from './client';
-import type { ApiResponse, Lead, ContactEnquiry, ProductEnquiry, InstallationEnquiry } from '../types';
-
-export interface LeadsQuery {
-  page?: number;
-  limit?: number;
-  status?: string;
-  search?: string;
-}
+import type { ApiResponse } from '../types';
+import type { LeadSubmitPayload, LeadSubmitResponse, ProductEnquiryPayload } from '../types/lead.types';
 
 export const leadsApi = {
-  getAll: (params?: LeadsQuery) =>
-    apiClient.get<ApiResponse<Lead[]>>('/leads', { params }),
+  /**
+   * POST /api/leads
+   * Accepts: type, customerName, customerPhone, customerWhatsApp?,
+   *          customerEmail?, data (flexible per-type object)
+   * Required in data:
+   *   contact          → data.message
+   *   technical_support → data.problem
+   *   product_enquiry  → data.productId
+   *   others           → no hard server-side requirement beyond type
+   */
+  submit: (payload: LeadSubmitPayload) =>
+    apiClient.post<LeadSubmitResponse>('/leads', payload),
+};
 
-  getById: (id: string) =>
-    apiClient.get<ApiResponse<Lead>>(`/leads/${id}`),
-
-  updateStatus: (id: string, status: Lead['status']) =>
-    apiClient.patch<ApiResponse<Lead>>(`/leads/${id}/status`, { status }),
-
-  delete: (id: string) =>
-    apiClient.delete<ApiResponse<void>>(`/leads/${id}`),
-
-  // Contact enquiries
-  getContactEnquiries: (params?: LeadsQuery) =>
-    apiClient.get<ApiResponse<ContactEnquiry[]>>('/leads/contact', { params }),
-
-  // Product enquiries
-  getProductEnquiries: (params?: LeadsQuery) =>
-    apiClient.get<ApiResponse<ProductEnquiry[]>>('/leads/product', { params }),
-
-  // Installation enquiries
-  getInstallationEnquiries: (params?: LeadsQuery) =>
-    apiClient.get<ApiResponse<InstallationEnquiry[]>>('/leads/installation', { params }),
+export const productEnquiryApi = {
+  /**
+   * POST /api/products/:id/enquiry
+   * Dedicated product enquiry endpoint — creates a ProductEnquiry document
+   * and increments product.enquiryCount.
+   */
+  submit: (productId: string, payload: ProductEnquiryPayload) =>
+    apiClient.post<ApiResponse<unknown>>(`/products/${productId}/enquiry`, {
+      ...payload,
+      channel: payload.channel ?? 'form',
+    }),
 };
