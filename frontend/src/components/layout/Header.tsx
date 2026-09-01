@@ -10,6 +10,7 @@ const navLinks = [
   { label: 'Services', to: ROUTES.services },
   { label: 'Videos',   to: ROUTES.videos },
   { label: 'Articles', to: ROUTES.articles },
+  { label: 'FAQ',      to: ROUTES.faq },
   { label: 'Contact',  to: ROUTES.contact },
 ];
 

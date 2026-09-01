@@ -23,6 +23,7 @@ export const ROUTES = {
   articles: '/articles',
   articleDetail: (slug: string) => `/articles/${slug}`,
   videos: '/videos',
+  faq: '/faq',
   contact: '/contact',
   about: '/about',
   // Admin
