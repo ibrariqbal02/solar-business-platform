@@ -8,6 +8,7 @@ const navLinks = [
   { label: 'Home',     to: ROUTES.home },
   { label: 'Products', to: ROUTES.products },
   { label: 'Services', to: ROUTES.services },
+  { label: 'Videos',   to: ROUTES.videos },
   { label: 'Articles', to: ROUTES.articles },
   { label: 'Contact',  to: ROUTES.contact },
 ];

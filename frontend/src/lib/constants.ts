@@ -22,6 +22,7 @@ export const ROUTES = {
   serviceDetail: (slug: string) => `/services/${slug}`,
   articles: '/articles',
   articleDetail: (slug: string) => `/articles/${slug}`,
+  videos: '/videos',
   contact: '/contact',
   about: '/about',
   // Admin
